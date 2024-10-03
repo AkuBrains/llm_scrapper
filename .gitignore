@@ -1,0 +1,7 @@
+.pdfs/
+pdfs/
+.summaries/
+*.md
+*.ipynb
+__pycache__/
+.idea/
