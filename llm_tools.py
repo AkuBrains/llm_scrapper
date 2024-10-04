@@ -1,12 +1,13 @@
-import google.generativeai as genai
-import time
-import os
 import multiprocessing
+import os
 import re
-import ollama
-from pathlib import Path
-from google.generativeai import GenerativeModel
+import time
 from abc import ABC, abstractmethod
+from tqdm import trange
+
+import google.generativeai as genai
+import ollama
+from google.generativeai import GenerativeModel
 
 from file_tools import aggregate_files
 
@@ -99,11 +100,13 @@ def scrapper(scrapper_id: int, pdf_extractor, llm_factory: LLMFactory, articles:
     summaries_path = '.summaries'
     os.makedirs(summaries_path, exist_ok=True)
     summaries_paths = []
-    article_id = scrapper_id
 
+    t = trange(len(articles), desc='', leave=True)
     # Iterate over the shared list and process each item
-    while article_id < len(articles):
-        print(f"Task {scrapper_id} is processing {articles[article_id][0]}...")
+    for article_id in t:
+        t.set_description(f"Task {scrapper_id} is processing {articles[article_id][0][:min(40, len(articles[article_id][0]))]}...",
+                          refresh=True)
+
         article_iid = (articles[article_id][1].split('/')[-1]).split('.pdf')[0]
         file_name = f'summary_{article_iid}.txt'
         file_path = os.path.join(summaries_path, file_name)
@@ -118,7 +121,6 @@ def scrapper(scrapper_id: int, pdf_extractor, llm_factory: LLMFactory, articles:
                 f.write(summary)  # Write to the temp file
                 f.write('\n---\n')
         time.sleep(0.5)
-        article_id = article_id + NUM_PROCESS
         summaries_paths.append(file_path)
     print(f"Task {scrapper_id} done, results saved to {summaries_path}")
     return summaries_paths
